@@ -96,7 +96,6 @@
 		 * @return array          Array of objects for each row.
 		 */
 		public function query(string $query, array $params = array()) : PDOStatement {
-			var_dump($query);
 			$statement = $this->connection->prepare($query);
 			$statement->execute($params);
 			return $statement;
@@ -223,21 +222,9 @@
 		 */
 		public function insert_row(string $table, array $fields) : int {
 			$query = "INSERT INTO `" . self::clean_string($table) . "` SET " . self::get_query_fields($fields);
-
-			// Prepare
-			$statement = $this->connection->prepare($query);
-
-			// Execute
-			$execute = $statement->execute(self::get_execute_fields($fields));
-
-			if (!$execute) {
-				// Handle error.
-				echo 'error!';
-			}
-
+			$statement = $this->query($query, self::get_execute_fields($fields));
 			return (int) $this->connection->lastInsertId();
 		}
-
 
 		/**
 		 * Insert multiple rows to a table
@@ -303,9 +290,7 @@
 				$params = array_merge($params, self::format_where($where));
 			}
 
-			// Prepare
 			$statement = $this->query($query, self::get_execute_fields($params));
-
 			return $statement->rowCount();
 		}
 
