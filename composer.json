@@ -1,7 +1,7 @@
 {
 	"name": "xy2z/pdodb",
 	"description": "PDO wrapper library for PHP 7.0+",
-	"keywords": ["mysql", "mysqli"],
+	"keywords": ["mysql", "mysqli", "pdo", "pdo wrapper"],
 	"type": "library",
 	"license": "MIT",
 	"authors": [

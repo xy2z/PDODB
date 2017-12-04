@@ -59,6 +59,15 @@
 		}
 
 		/**
+		 * Get PDO connection instance
+		 *
+		 * @return object PDO connection instance
+		 */
+		public function get_connection() : PDO {
+			return $this->connection;
+		}
+
+		/**
 		 * Get MySQL error message
 		 *
 		 * @return array Error info
