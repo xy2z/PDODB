@@ -1,12 +1,12 @@
 <?php
 
-	namespace xy2z\Tools;
+	namespace xy2z\PDODB;
+
 	use \PDO, \PDOStatement;
 	use \stdClass;
 
 	/**
 	 * PDO Database class
-	 * Requires PHP 7.0+
 	 *
 	 * @author Alexander Pedersen <xy2z@protonmail.com>
 	 */
