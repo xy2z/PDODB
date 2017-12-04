@@ -1,0 +1,13 @@
+{
+    "name": "xy2z/pdodb",
+    "description": "PDO wrapper library for PHP 7.0+",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "xy2z",
+            "email": "xy2z@protonmail.com"
+        }
+    ],
+    "require": {}
+}
