@@ -26,7 +26,7 @@ $data = $pdo->select("SELECT * FROM tablename WHERE name LIKE :name", array('nam
 $row = $pdo->select_row('SELECT * FROM tablename WHERE id = :id', array(':id' => 4));
 
 // Select a single field
-$field = $pdo->select_field('SELECT floatz FROM tablename WHERE id = :id', array(
+$field = $pdo->select_field('SELECT name FROM tablename WHERE id = :id', array(
 	':id' => 24
 ));
 
@@ -38,8 +38,8 @@ $id = $pdo->insert_row('tablename', array(
 
 // Insert multiple rows
 $insert = $pdo->insert_multi('tablename', array(
-	(object) array('name' => "Will", 'age' => '11'),
-	array('name' => 'El', 'kewl' => '11'),
+	(object) array('name' => 'Will', 'age' => '11'),
+	array('name' => 'El', 'age' => '11'),
 ));
 
 // Update
