@@ -15,7 +15,7 @@
 	},
 	"autoload": {
 		"psr-4": {
-			"xy2z\\Philer\\": "src/"
+			"xy2z\\PDODB\\": "src/"
 		}
 	}
 }
