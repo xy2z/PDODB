@@ -6,11 +6,9 @@
 
 	/**
 	 * PDO Database class
-	 * Requires PHP 7.1+
+	 * Requires PHP 7.0+
 	 *
 	 * @author Alexander Pedersen <xy2z@protonmail.com>
-	 *
-	 * Created 2017-11-22.
 	 */
 	class PDODB {
 
@@ -98,13 +96,14 @@
 		 * @return array          Array of objects for each row.
 		 */
 		public function query(string $query, array $params = array()) : PDOStatement {
+			var_dump($query);
 			$statement = $this->connection->prepare($query);
 			$statement->execute($params);
 			return $statement;
 		}
 
 		/**
-		 * Select
+		 * Select table data as array of objects.
 		 *
 		 * @param  string $query  The select query.
 		 * @param  array  $params The params to be replaced.
@@ -112,27 +111,26 @@
 		 * @return array          Array of objects for each row.
 		 */
 		public function select(string $query, array $params = array()) : array {
-			// $statement = $this->connection->prepare($query);
-			// $statement->execute($params);
 			$statement = $this->query($query, $params);
 			return $statement->fetchAll(PDO::FETCH_CLASS);
 		}
 
 		/**
-		 * Select a single row
+		 * Select a single row.
+		 *
 		 * @param  string $query  Select query.
 		 * @param  array  $params The params to be replaced.
 		 *
-		 * @return stdClass       The row. Null if not found.
+		 * @return stdClass       The row. NULL if not found.
 		 */
 		public function select_row(string $query, array $params = array()) /*: ?stdClass*/ {
-			// $statement = $this->connection->prepare($query);
-			// $statement->execute($params);
 			$statement = $this->query($query, $params);
 			$fetch = $statement->fetchAll(PDO::FETCH_CLASS);
+
 			if (!$fetch) {
 				return null;
 			}
+
 			return $fetch[0];
 		}
 
@@ -142,20 +140,24 @@
 		 * @param  string $query  The select query.
 		 * @param  array  $params The params to be replaced.
 		 *
-		 * @return string|null         The value of the field. Null if not found.
+		 * @return mixed          The value of the field. NULL if not found.
 		 */
 		public function select_field(string $query, array $params = array()) /*: ?string*/ {
-			// $statement = $this->connection->prepare($query);
-			// $statement->execute($params);
 			$statement = $this->query($query, $params);
-
-			// TODO: Send a PHP Notice if there's more rows/columns than 1.
-			//
 			// Fetch the first row. (there should only be 1)
 			$fetch =  $statement->fetch(PDO::FETCH_NUM);
 			return $fetch[0];
 		}
 
+		/**
+		 * Get query fields from array to string
+		 *
+		 * @param array $fields
+		 * @param string $separator
+		 * @param string $key_value_prepend
+		 *
+		 * @return string Fields as a string ready for query.
+		 */
 		private static function get_query_fields(array $fields, $separator = ',', string $key_value_prepend = '') : string {
 			$query = array();
 
@@ -172,11 +174,11 @@
 		 * Get fields values for a query with the key.
 		 * Used for example in insert_mulit() for the VALUES().
 		 *
-		 * @param array $fields [description]
-		 * @param string $separator [description]
-		 * @param string $key_value_prepend [description]
+		 * @param array $fields
+		 * @param string $separator
+		 * @param string $key_value_prepend
 		 *
-		 * @return string The query part
+		 * @return string Values without the keys
 		 */
 		private static function get_query_fields_values(array $fields, $separator = ',', string $key_value_prepend = '') : string {
 			$query = array();
@@ -190,6 +192,14 @@
 			return implode(' ' . $separator . ' ', $query);
 		}
 
+		/**
+		 * Get execute fields
+		 *
+		 * @param array $fields
+		 * @param string $key_prepend Prepend to each key.
+		 *
+		 * @return array [description]
+		 */
 		private static function get_execute_fields(array $fields, string $key_prepend = '') : array {
 			$params = array();
 
@@ -264,8 +274,14 @@
 		}
 
 		/**
-		 * Update
+		 * Update table data
 		 *
+		 * @param string $table Table name
+		 * @param array $fields Fields to update.
+		 * @param array $where the sql WHERE as array.
+		 * @param int $limit Limit rows to update
+		 *
+		 * @return int Number of rows affected
 		 */
 		public function update(string $table, array $fields, $where = false, $limit = null) {
 			$query = "UPDATE `" . self::clean_string($table) . "` SET " . self::get_query_fields($fields);
@@ -282,38 +298,45 @@
 				$query .= " LIMIT :pdodb_limit";
 			}
 
-			// Prepare
-			$statement = $this->connection->prepare($query);
-
 			if ($where) {
 				// Format WHERE array so the keys doesn't interfere with the $fields keys.
-				$where = self::format_where($where);
-				$params = array_merge($params, $where);
+				$params = array_merge($params, self::format_where($where));
 			}
 
-			// Execute
-			$execute = $statement->execute(self::get_execute_fields($params));
-
-			if (!$execute) {
-				// Handle error.
-				echo 'Error: ';
-			}
+			// Prepare
+			$statement = $this->query($query, self::get_execute_fields($params));
 
 			return $statement->rowCount();
 		}
 
+		/**
+		 * Clean/escape a string when it's not possible in execute()
+		 * Eg. table name, or other data that shouldn't have plings (')
+		 *
+		 * @param string $var The variable to clean/escape.
+		 *
+		 * @return string The cleaned/escaped string.
+		 */
 		private static function clean_string(string $var) {
 			$valid_chars = array('$', '-', '_');
 
+			// Fail if other chars than the valid are in the string (except a-z and 0-9).
 			if (!ctype_alnum(str_replace($valid_chars, '', $var))) {
-				throw new Exception('String contains invalid chars.');
+				throw new Exception('String contains invalid character(s).');
 			}
 
 			return $var;
 		}
 
+		/**
+		 * Format the WHERE array.
+		 *
+		 * @param array $where WHERE array.
+		 * @param string $key_prepend Prepend a string to all keys.
+		 *
+		 * @return array The new WHERE array.
+		 */
 		private static function format_where(array $where, $key_prepend = 'where_') {
-			// TODO: New name for this method.
 			foreach ($where as $key => $value) {
 				unset($where[$key]);
 				$where[$key_prepend . $key] = $value;
@@ -321,6 +344,15 @@
 			return $where;
 		}
 
+		/**
+		 * Delete table data
+		 *
+		 * @param string $table Table name.
+		 * @param array $where Array of fields in WHERE clause .
+		 * @param int $limit Limit of deleting rows.
+		 *
+		 * @return int Number of affected rows.
+		 */
 		public function delete(string $table, array $where, $limit = null) {
 			$params = $where;
 			$query = "DELETE FROM " . self::clean_string($table) . " WHERE " . self::get_query_fields($where);
@@ -330,9 +362,7 @@
 				$query .= " LIMIT :pdodb_limit";
 			}
 
-			var_dump($query);
-			$statement = $this->connection->prepare($query);
-			$execute = $statement->execute($params);
+			$statement = $this->query($query, $params);
 
 			return $statement->rowCount();
 		}
