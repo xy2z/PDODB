@@ -179,7 +179,7 @@
 		}
 
 		/**
-		 * Get fields values for a query with the key.
+		 * Get fields values for a query without the key.
 		 * Used for example in insert_mulit() for the VALUES().
 		 *
 		 * @param array $fields
@@ -225,13 +225,22 @@
 		 * Insert a single row
 		 *
 		 * @param  string $table  Table name
-		 * @param  array  $fields Fields to set
+		 * @param  array $fields Fields to set
+		 * @param  array $duplicate_key_fields Fields to set
 		 *
-		 * @return int            Insert ID.
+		 * @return int Insert ID.
 		 */
-		public function insert_row(string $table, array $fields) : int {
+		public function insert_row(string $table, array $fields, array $duplicate_key_fields = array()) : int {
 			$query = "INSERT INTO `" . self::clean_string($table) . "` SET " . self::get_query_fields($fields);
-			$statement = $this->query($query, self::get_execute_fields($fields));
+
+			// On duplicate key
+			$duplicate_prepend = 'duplicate_';
+			if (!empty($duplicate_key_fields)) {
+				$query .= " ON DUPLICATE KEY UPDATE " . self::get_query_fields($duplicate_key_fields, ',', $duplicate_prepend);
+			}
+
+			$params = array_merge(self::get_execute_fields($fields), self::get_execute_fields($duplicate_key_fields, $duplicate_prepend));
+			$statement = $this->query($query, $params);
 			return (int) $this->connection->lastInsertId();
 		}
 
