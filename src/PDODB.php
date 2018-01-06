@@ -33,10 +33,10 @@
 		 * @param string $user     Username.
 		 * @param string $password Password. Default empty.
 		 * @param string $engine   Default 'mysql'.
+		 * @param string $charset   Default 'utf8'.
 		 */
-		public function __construct(string $db, string $user, string $password = '', string $engine = 'mysql') {
-			$dsn = strtolower($engine) . ':dbname=' . $db . ';host=127.0.0.1;charset=utf8';
-			// $dsn = $engine . ':dbname=' . $db . ';host=127.0.0.1';
+		public function __construct(string $db, string $user, string $password = '', string $engine = 'mysql', $charset = 'utf8') {
+			$dsn = strtolower($engine) . ':dbname=' . $db . ';host=127.0.0.1;charset=' . $charset;
 			$this->db_name = $db;
 			$this->connection = new PDO($dsn, $user, $password);
 
