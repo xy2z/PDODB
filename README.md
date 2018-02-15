@@ -14,21 +14,22 @@ $pdo = new PDODB('database', 'user', 'password', 'mysql','utf8');
 // Change default database.
 $pdo->use('test');
 
-// Query
-$result = $pdo->query("DELETE FROM tablename WHERE name LIKE :name", array(':name' => '%del%'));
-
 // Select query
 $data = $pdo->select("SELECT * FROM tablename");
 $data = $pdo->select("SELECT * FROM tablename LIMIT :limit", array('limit' => 10));
-$data = $pdo->select("SELECT * FROM tablename WHERE name LIKE :name", array('name' => '%Demogorgon%'));
+$data = $pdo->select("SELECT id, age FROM tablename WHERE name LIKE :name", array('name' => '%Demogorgon%'));
+foreach ($data as $row) {
+	echo $row->id;
+}
+
 
 // Select a single row
-$row = $pdo->select_row('SELECT * FROM tablename WHERE id = :id', array(':id' => 4));
-echo $row->id;
+$row = $pdo->select_row('SELECT name, age FROM users WHERE id = :id', array('id' => 4));
+echo $row->name;
 
 // Select a single field
 $name = $pdo->select_field('SELECT name FROM tablename WHERE id = :id', array(
-	':id' => 24
+	'id' => 24
 ));
 echo $name;
 
@@ -37,22 +38,26 @@ $id = $pdo->insert_row('tablename', array(
 	'name' => 'The Dude',
 	'age' => 234
 ));
+echo 'Inserted ID: ' . $id;
 
-// Insert multiple rows (accepts array of objects/arrays)
-$insert = $pdo->insert_multi('tablename', array(
+// Insert multiple rows (accepts array of (objects/arrays))
+$count = $pdo->insert_multi('tablename', array(
 	(object) array('name' => 'Will', 'age' => '11'),
 	array('name' => 'El', 'age' => '11'),
 ));
+echo 'Inserted ' . $count . ' rows.';
 
 // Update
 $fields = array(
 	'name' => 'New Name',
 	'age' => '12'
 );
-$result = $pdo->update('tablename', $fields, array('id' => 24));
+$count = $pdo->update('tablename', $fields, array('id' => 24));
+echo 'Updated ' . $count . ' rows.';
 
 // Delete rows
-$result = $pdo->delete('tablename', array('id' => 14));
+$count = $pdo->delete('tablename', array('id' => 14));
+echo 'Deleted ' . $count . ' rows.';
 
 // Transaction.
 try {
@@ -66,4 +71,8 @@ try {
 	var_dump('Error: ' . $e->getMessage());
 	$pdo->transaction_rollback();
 }
+
+// Query
+$statement = $pdo->query("DELETE FROM tablename WHERE name LIKE :name", array('name' => '%del%'));
+echo 'Deleted ' . $pdo->affected_rows($statement) . ' rows.';
 ```

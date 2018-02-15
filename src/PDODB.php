@@ -145,16 +145,23 @@
 		/**
 		 * Query
 		 *
-		 * @param  string $query  The query.
-		 * @param  array  $params The params to be replaced.
+		 * @param  string $query          The query.
+		 * @param  array  $params         The params to be replaced.
+		 * @param  bool   $format_params  Format params for execution?
 		 *
 		 * @return array          Array of objects for each row.
 		 */
-		public function query(string $query, array $params = array()) : PDOStatement {
+		public function query(string $query, array $params = array(), $format_params = true) : PDOStatement {
 			$statement = $this->connection->prepare($query);
+
+			if ($format_params) {
+				$params = self::get_execute_fields($params);
+			}
+
 			$statement->execute($params);
 			return $statement;
 		}
+
 
 		/**
 		 * Select table data as array of objects.
@@ -286,7 +293,7 @@
 			}
 
 			$params = array_merge(self::get_execute_fields($fields), self::get_execute_fields($duplicate_key_fields, $duplicate_prepend));
-			$statement = $this->query($query, $params);
+			$statement = $this->query($query, $params, false);
 			return (int) $this->connection->lastInsertId();
 		}
 
@@ -320,7 +327,7 @@
 			}
 			$query .= implode(', ', $values);
 
-			$statement = $this->query($query, $params);
+			$statement = $this->query($query, $params, false);
 			return $statement->rowCount();
 		}
 
@@ -354,7 +361,7 @@
 				$params = array_merge($params, self::format_where($where));
 			}
 
-			$statement = $this->query($query, self::get_execute_fields($params));
+			$statement = $this->query($query, self::get_execute_fields($params), false);
 			return $statement->rowCount();
 		}
 
@@ -411,7 +418,7 @@
 				$query .= " LIMIT :pdodb_limit";
 			}
 
-			$statement = $this->query($query, $params);
+			$statement = $this->query($query, self::get_execute_fields($params), false);
 
 			return $statement->rowCount();
 		}
