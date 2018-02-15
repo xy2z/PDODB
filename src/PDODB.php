@@ -27,6 +27,13 @@
 		private $db_name;
 
 		/**
+		 * In transaction
+		 *
+		 * @var boolean
+		 */
+		private $in_transaction = false;
+
+		/**
 		 * Constructor
 		 *
 		 * @param string $db       Database name
@@ -94,6 +101,45 @@
 		 */
 		public function last_insert_id() : int {
 			return $this->connection->lastInsertId();
+		}
+
+		/**
+		 * Begin transaction
+		 *
+		 * @return bool Returns TRUE on success or FALSE on failure.
+		 */
+		public function transaction_start() {
+			$this->in_transaction = true;
+			return $this->connection->beginTransaction();
+		}
+
+		/**
+		 * Commit transaction
+		 *
+		 * @return bool Returns TRUE on success or FALSE on failure.
+		 */
+		public function transaction_commit() {
+			$this->in_transaction = false;
+			return $this->connection->commit();
+		}
+
+		/**
+		 * Rollback transaction
+		 *
+		 * @return bool Returns TRUE on success or FALSE on failure.
+		 */
+		public function transaction_rollback() {
+			$this->in_transaction = false;
+			return $this->connection->rollBack();
+		}
+
+		/**
+		 * In a transaction
+		 *
+		 * @return bool Returns TRUE on success or FALSE on failure.
+		 */
+		public function in_transaction() {
+			return $this->in_transaction;
 		}
 
 		/**

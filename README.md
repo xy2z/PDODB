@@ -9,9 +9,9 @@
 ```php
 use xy2z\PDODB\PDODB;
 
-$pdo = new PDODB('database_name', 'user', 'password');
+$pdo = new PDODB('database', 'user', 'password', 'mysql','utf8');
 
-// Change default database to 'test'.
+// Change default database.
 $pdo->use('test');
 
 // Query
@@ -22,13 +22,15 @@ $data = $pdo->select("SELECT * FROM tablename");
 $data = $pdo->select("SELECT * FROM tablename LIMIT :limit", array('limit' => 10));
 $data = $pdo->select("SELECT * FROM tablename WHERE name LIKE :name", array('name' => '%Demogorgon%'));
 
-// Select row
+// Select a single row
 $row = $pdo->select_row('SELECT * FROM tablename WHERE id = :id', array(':id' => 4));
+echo $row->id;
 
 // Select a single field
-$field = $pdo->select_field('SELECT name FROM tablename WHERE id = :id', array(
+$name = $pdo->select_field('SELECT name FROM tablename WHERE id = :id', array(
 	':id' => 24
 ));
+echo $name;
 
 // Insert row
 $id = $pdo->insert_row('tablename', array(
@@ -36,7 +38,7 @@ $id = $pdo->insert_row('tablename', array(
 	'age' => 234
 ));
 
-// Insert multiple rows
+// Insert multiple rows (accepts array of objects/arrays)
 $insert = $pdo->insert_multi('tablename', array(
 	(object) array('name' => 'Will', 'age' => '11'),
 	array('name' => 'El', 'age' => '11'),
@@ -47,10 +49,21 @@ $fields = array(
 	'name' => 'New Name',
 	'age' => '12'
 );
-$where_id = 24;
-$result = $pdo->update('tablename', $fields, array('id' => $where_id));
+$result = $pdo->update('tablename', $fields, array('id' => 24));
 
 // Delete rows
-$where_id = 14;
-$result = $pdo->delete('tablename', array('id' => $where_id));
+$result = $pdo->delete('tablename', array('id' => 14));
+
+// Transaction.
+try {
+	$pdo->transaction_start();
+
+	$pdo->insert_row('users', array('username' => 'Elliot'));
+	$pdo->delete('tablename', array('id' => 60));
+
+	$pdo->transaction_commit();
+} catch(Exception $e) {
+	var_dump('Error: ' . $e->getMessage());
+	$pdo->transaction_rollback();
+}
 ```
