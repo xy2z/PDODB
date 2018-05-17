@@ -36,14 +36,15 @@
 		/**
 		 * Constructor
 		 *
+		 * @param string $host     Host
 		 * @param string $db       Database name
 		 * @param string $user     Username.
 		 * @param string $password Password. Default empty.
 		 * @param string $engine   Default 'mysql'.
 		 * @param string $charset   Default 'utf8'.
 		 */
-		public function __construct(string $db, string $user, string $password = '', string $engine = 'mysql', $charset = 'utf8') {
-			$dsn = strtolower($engine) . ':dbname=' . $db . ';host=127.0.0.1;charset=' . $charset;
+		public function __construct(string $host, string $db, string $user, string $password = '', string $engine = 'mysql', $charset = 'utf8') {
+			$dsn = strtolower($engine) . ':dbname=' . $db . ';host=' . $host . ';charset=' . $charset;
 			$this->db_name = $db;
 			$this->connection = new PDO($dsn, $user, $password);
 
@@ -142,6 +143,22 @@
 			return $this->in_transaction;
 		}
 
+		private function prepare(string $query, array $params = array()) : PDOStatement {
+			// Check for array in params
+			// Useful when using IN().
+			foreach ($params as $key => $value) {
+				if (is_array($value)) {
+					// Generate array with correct syntax, e.g. array(':id0', ':id1')
+					$arr = array_fill(0, count($value), null);
+					$new_key = implode(',', preg_filter('/^/', ':' . $key, array_keys($arr)));
+
+					$query = str_replace(':' . $key, $new_key, $query);
+				}
+			}
+
+			return $this->connection->prepare($query);
+		}
+
 		/**
 		 * Query
 		 *
@@ -152,7 +169,7 @@
 		 * @return array          Array of objects for each row.
 		 */
 		public function query(string $query, array $params = array(), $format_params = true) : PDOStatement {
-			$statement = $this->connection->prepare($query);
+			$statement = $this->prepare($query, $params);
 
 			if ($format_params) {
 				$params = self::get_execute_fields($params);
@@ -225,7 +242,12 @@
 			// Add fields to the query
 			// So it would look like 'id = :id'
 			foreach ($fields as $key => $value) {
-				$query[] = '`' . $key . '` = :' . $key_value_prepend . $key;
+				if (is_array($value)) {
+					// When using IN() etc.
+					$query[] = '`' . $key . '` IN (:' . $key_value_prepend . $key . ')';
+				} else {
+					$query[] = '`' . $key . '` = :' . $key_value_prepend . $key;
+				}
 			}
 
 			return implode(' ' . $separator . ' ', $query);
@@ -267,7 +289,15 @@
 			// Add fields to the insert query
 			// So it would look like 'id = :id'
 			foreach ($fields as $key => $value) {
-				$params[':' . $key_prepend . $key] = $value;
+				if (is_array($value)) {
+					// When using IN() etc.
+					$i = 0;
+					foreach ($value as $val) {
+						$params[':' . $key_prepend . $key . $i++] = $val;
+					}
+				} else {
+					$params[':' . $key_prepend . $key] = $value;
+				}
 			}
 
 			// Return $params to be used in the execute().
@@ -361,7 +391,7 @@
 				$params = array_merge($params, self::format_where($where));
 			}
 
-			$statement = $this->query($query, self::get_execute_fields($params), false);
+			$statement = $this->query($query, $params);
 			return $statement->rowCount();
 		}
 
@@ -418,7 +448,7 @@
 				$query .= " LIMIT :pdodb_limit";
 			}
 
-			$statement = $this->query($query, self::get_execute_fields($params), false);
+			$statement = $this->query($query, $params);
 
 			return $statement->rowCount();
 		}
