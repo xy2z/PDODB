@@ -224,7 +224,7 @@
 			$statement = $this->query($query, $params);
 			// Fetch the first row. (there should only be 1)
 			$fetch =  $statement->fetch(PDO::FETCH_NUM);
-			return $fetch[0];
+			return $fetch[0] ?? null;
 		}
 
 		/**
