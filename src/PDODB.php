@@ -36,17 +36,10 @@
 		/**
 		 * Constructor
 		 *
-		 * @param string $host     Host
-		 * @param string $db       Database name
-		 * @param string $user     Username.
-		 * @param string $password Password. Default empty.
-		 * @param string $engine   Default 'mysql'.
-		 * @param string $charset   Default 'utf8'.
+		 * @param PDO $pdo     PDO object
 		 */
-		public function __construct(string $host, string $db, string $user, string $password = '', string $engine = 'mysql', $charset = 'utf8') {
-			$dsn = strtolower($engine) . ':dbname=' . $db . ';host=' . $host . ';charset=' . $charset;
-			$this->db_name = $db;
-			$this->connection = new PDO($dsn, $user, $password);
+		public function __construct(PDO $pdo) {
+			$this->connection = $pdo;
 
 			// Set error mode to throw exceptions.
 			$this->connection->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
